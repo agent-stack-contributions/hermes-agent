@@ -948,7 +948,7 @@ same auth gate as the rest of `/api/`.
 | `PUT /api/memory/provider` | Select a provider (empty = built-in only) |
 | `POST /api/memory/reset` | Reset built-in memory. Body: `{target: all\|memory\|user}` |
 | `POST /api/gateway/start` · `/stop` · `/restart` | Gateway lifecycle (backgrounded) |
-| `PUT /api/gateway/lifecycle?profile=<name>&desired=running\|retired` | Retryable lifecycle for an externally managed standalone S6 profile. |
+| `PUT /api/gateway/lifecycle?profile=<name>&desired=running\|retired` | Start or retire a named profile that runs its own gateway under s6 |
 | `POST /api/ops/doctor` · `/security-audit` · `/backup` · `/import` | Diagnostics & maintenance (backgrounded; tail via `/api/actions/{name}/status`) |
 | `GET /api/ops/hooks` | Configured shell hooks + allowlist status |
 | `GET /api/ops/checkpoints` · `POST .../prune` | Inspect / prune the `/rollback` store |
@@ -968,13 +968,15 @@ same auth gate as the rest of `/api/`.
 | `POST /api/sessions/prune` | Delete ended sessions older than N days |
 | `PUT /api/cron/jobs/{id}` | Edit a cron job's prompt / schedule / name / deliver |
 
-The external lifecycle endpoint requires normal Dashboard authentication. It
-returns the exact `profile` and `desired` state with `settled: false` while an
-accepted S6 operation is unresolved. Retry the same request to reconcile it.
-After retirement, a managed start returns HTTP 409. Container boot also honors
-the retirement marker. Profile files remain available. An operator can
-explicitly start the profile for recovery after assigning fresh credentials.
-Keep the retirement marker in place during recovery.
+This endpoint uses the same sign-in as other Dashboard actions. The response
+includes `profile`, `desired`, and `settled`. If `settled` is `false`, retry the
+same request. Hermes is still waiting for s6 to confirm the requested state.
+
+After retirement, this endpoint returns HTTP `409` for start requests. The
+container also keeps the gateway stopped when it restarts. Hermes keeps the
+profile's files. To recover the profile, set fresh credentials and start it
+explicitly from the Dashboard or CLI. Leave the retirement record in place so
+the lifecycle endpoint continues to reject starts.
 
 ## Authentication (gated mode)
 

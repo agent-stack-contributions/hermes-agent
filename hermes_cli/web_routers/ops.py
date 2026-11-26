@@ -338,7 +338,7 @@ async def stop_gateway(profile: Optional[str] = None, interrupt: bool = False):
 
 @router.put("/api/gateway/lifecycle")
 async def reconcile_gateway_lifecycle(profile: str, desired: Literal["running", "retired"]):
-    """Settle external lifecycle intent for an explicit named S6 gateway."""
+    """Start or retire a named profile's gateway under s6."""
     from hermes_cli.profiles import profile_is_standalone
     from hermes_cli.service_manager import S6ServiceManager, get_service_manager
     from hermes_cli.s6_profile_lifecycle import GatewayRetiredError, reconcile_profile_gateway

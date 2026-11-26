@@ -1,4 +1,4 @@
-"""Reconcile a named S6 gateway for an external owner with terminal retirement."""
+"""Start or retire a named profile's gateway under s6."""
 
 import os
 from pathlib import Path
@@ -15,7 +15,7 @@ _INTENT_FILE = "gateway-lifecycle-intent"
 
 
 class GatewayRetiredError(Exception):
-    """External owners cannot bring a retired gateway back up."""
+    """The managed endpoint cannot start a retired gateway."""
 
 
 def profile_gateway_retired(profile_dir: Path) -> bool:
@@ -33,12 +33,12 @@ def reconcile_profile_gateway(
     profile_dir: Path,
     desired: Literal["running", "retired"],
 ) -> bool:
-    """Return True once S6 has settled the intent. Retrying an intent is safe."""
+    """Return True when s6 confirms the requested state."""
     import fcntl
 
     name = f"{S6_SERVICE_PREFIX}{profile}"
     intent_file = profile_dir / _INTENT_FILE
-    # A separate lock inode survives atomic intent-file replacement and dashboard restart.
+    # Lock a separate file so replacing the state file doesn't release the lock.
     fd = os.open(
         profile_dir / f".{_INTENT_FILE}.lock",
         os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW,
